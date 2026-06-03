@@ -622,8 +622,12 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
     <div class="card">
       <div class="card-hd">
         <span class="card-hd-title"><span>📄</span> Templates</span>
-        <button class="sm-btn outline" onclick="openAddTmpl()">+ Add</button>
+        <div style="display:flex;gap:6px;">
+          <button class="sm-btn outline" onclick="openAddTmplTab()">+ Tab</button>
+          <button class="sm-btn outline" onclick="openAddTmpl()">+ Template</button>
+        </div>
       </div>
+      <div style="display:flex;gap:0;flex-wrap:wrap;border-bottom:1.5px solid var(--border);background:var(--parchment);" id="tmplTabsBar"></div>
       <div class="card-body">
         <div class="tmpl-grid" id="tmplGrid"></div>
       </div>
@@ -798,11 +802,26 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
   <div class="modal-box" style="max-width:480px;">
     <h3 id="tmplModalTitle">Add Template</h3>
     <div class="form-row"><div class="form-label">Name</div><input class="modal-inp" id="tmplm-name" placeholder="e.g. Rescheduling Message"/></div>
-    <div class="form-row"><div class="form-label">Content (to copy)</div><textarea class="modal-ta" id="tmplm-body" placeholder="Paste the template text here…" style="min-height:120px;"></textarea></div>
+    <div class="form-row"><div class="form-label">Tab</div><select class="modal-sel" id="tmplm-tab"></select></div>
+    <div class="form-row"><div class="form-label">Category Tag (optional)</div><input class="modal-inp" id="tmplm-cat" placeholder="e.g. Daily, Follow Up, Admin..."/></div>
+    <div class="form-row"><div class="form-label">Content (to copy)</div><textarea class="modal-ta" id="tmplm-body" placeholder="Paste the template text here..." style="min-height:120px;"></textarea></div>
     <input type="hidden" id="tmplm-editIdx"/>
     <div class="modal-btns">
       <button class="m-btn cancel" onclick="closeOverlay('tmplModal')">Cancel</button>
       <button class="m-btn ok" onclick="saveTmpl()">Save</button>
+    </div>
+  </div>
+</div>
+   
+<!-- Add/Rename Template Tab Modal -->
+<div class="overlay" id="tmplTabModal">
+  <div class="modal-box" style="max-width:360px;">
+    <h3 id="tmplTabModalTitle">New Tab</h3>
+    <div class="form-row"><div class="form-label">Tab Name</div><input class="modal-inp" id="tmplTabm-name" placeholder="e.g. Follow Up, Sourcing..."/></div>
+    <input type="hidden" id="tmplTabm-editId"/>
+    <div class="modal-btns">
+      <button class="m-btn cancel" onclick="closeOverlay('tmplTabModal')">Cancel</button>
+      <button class="m-btn ok" onclick="saveTmplTab()">Save</button>
     </div>
   </div>
 </div>
@@ -1378,41 +1397,110 @@ function delQL(i){QL.splice(i,1);renderQL();}
 renderQL();
 
 /* ════ TEMPLATES ════ */
+let TMPL_TABS=lsGet('rs3_tmpl_tabs',[{id:'tt-all',name:'All'},{id:'tt-gen',name:'General'}]);
 let TMPLS=lsGet('rs3_tmpls',[
-  {id:uid(),name:'Rescheduling',body:"Hi [Name], we'd like to reschedule your interview. Are you available…"},
-  {id:uid(),name:'Leads',body:"Hi [Name], we saw your profile and think you'd be a great fit for…"},
-  {id:uid(),name:'Indeed Template',body:''},
-  {id:uid(),name:'Virtual Interview',body:''},
+  {id:uid(),name:'Rescheduling',tab:'tt-gen',cat:'Follow Up',body:"Hi [Name], we'd like to reschedule your interview. Are you available..."},
+  {id:uid(),name:'Leads',tab:'tt-gen',cat:'Sourcing',body:"Hi [Name], we saw your profile and think you'd be a great fit for..."},
+  {id:uid(),name:'Indeed Template',tab:'tt-gen',cat:'',body:''},
+  {id:uid(),name:'Virtual Interview',tab:'tt-gen',cat:'',body:''},
 ]);
+let currentTmplTab='tt-all';
+
+function renderTmplTabs(){
+  const bar=document.getElementById('tmplTabsBar');
+  if(!bar)return;
+  let html='';
+  TMPL_TABS.forEach(function(t){
+    const active=t.id===currentTmplTab?' active':'';
+    html+='<button class="tmpl-tab-btn'+active+'" data-id="'+t.id+'" onclick="switchTmplTab(this.dataset.id)">';
+    html+=esc(t.name);
+    if(t.id!=='tt-all'){html+=' <span style="opacity:.4;font-size:.75em;margin-left:3px;" onclick="openEditTmplTab(this.parentElement.dataset.id);event.stopPropagation()">&#9999;</span>';}
+    html+='</button>';
+  });
+  html+='<button class="tmpl-tab-add" onclick="openAddTmplTab()">+ tab</button>';
+  bar.innerHTML=html;
+  const sel=document.getElementById('tmplm-tab');
+  if(sel){sel.innerHTML=TMPL_TABS.filter(function(t){return t.id!=='tt-all';}).map(function(t){return'<option value="'+t.id+'">'+esc(t.name)+'</option>';}).join('');}
+}
+function switchTmplTab(id){currentTmplTab=id;renderTmplTabs();renderTmpls();}
+function openAddTmplTab(){
+  document.getElementById('tmplTabModalTitle').textContent='New Tab';
+  document.getElementById('tmplTabm-name').value='';
+  document.getElementById('tmplTabm-editId').value='';
+  openOverlay('tmplTabModal');
+}
+function openEditTmplTab(id){
+  const t=TMPL_TABS.find(function(x){return x.id===id;});if(!t)return;
+  document.getElementById('tmplTabModalTitle').textContent='Rename Tab';
+  document.getElementById('tmplTabm-name').value=t.name;
+  document.getElementById('tmplTabm-editId').value=id;
+  openOverlay('tmplTabModal');
+}
+function saveTmplTab(){
+  const name=document.getElementById('tmplTabm-name').value.trim();if(!name)return;
+  const editId=document.getElementById('tmplTabm-editId').value;
+  if(editId){const t=TMPL_TABS.find(function(x){return x.id===editId;});if(t)t.name=name;}
+  else{const newId='tt-'+uid();TMPL_TABS.push({id:newId,name});currentTmplTab=newId;}
+  lsSet('rs3_tmpl_tabs',TMPL_TABS);closeOverlay('tmplTabModal');renderTmplTabs();renderTmpls();
+}
 function renderTmpls(){
   const g=document.getElementById('tmplGrid');
   const visible=currentTmplTab==='tt-all'?TMPLS:TMPLS.filter(function(t){return t.tab===currentTmplTab;});
-  if(!visible.length){g.innerHTML='<div class="tmpl-empty">No templates here. Click "+ Template" to add one.</div>';lsSet('rs3_tmpls',TMPLS);return;}
+  if(!visible.length){g.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.86rem;text-align:center;padding:20px;">No templates here. Click &quot;+ Template&quot; to add one.</div>';lsSet('rs3_tmpls',TMPLS);return;}
   let html='';
-  visible.forEach(function(t,vi){
+  visible.forEach(function(t){
     const realIdx=TMPLS.indexOf(t);
     html+='<div class="tmpl-row">';
     html+='<span class="tmpl-name">'+esc(t.name)+'</span>';
-    if(t.cat){html+='<span class="tmpl-cat-tag">'+esc(t.cat)+'</span>';}
+    if(t.cat){html+='<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;background:var(--border-l);color:var(--ink-m);border:1px solid var(--border);white-space:nowrap;flex-shrink:0;">'+esc(t.cat)+'</span>';}
     html+='<button class="tmpl-copy-btn" data-id="'+t.id+'" onclick="copyTmplById(this.dataset.id,this)">Copy</button>';
-    html+='<button class="tmpl-act-btn" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))" title="Edit">&#9999;</button>';
-    html+='<button class="tmpl-act-btn del" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))" title="Delete">&#x2715;</button>';
+    html+='<button style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))">&#9999;</button>';
+    html+='<button style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))">&#x2715;</button>';
     html+='</div>';
   });
   g.innerHTML=html;
   lsSet('rs3_tmpls',TMPLS);
 }
 function copyTmplById(id,btn){
-  const t=TMPLS.find(function(x){return x.id===id;});
-  if(!t)return;
+  const t=TMPLS.find(function(x){return x.id===id;});if(!t)return;
   try{navigator.clipboard.writeText(t.body||'');}catch(e){const ta=document.createElement('textarea');ta.value=t.body||'';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
   if(btn){const orig=btn.textContent;btn.textContent='✓ Copied!';setTimeout(function(){btn.textContent=orig;},1500);}
 }
-function openAddTmpl(){document.getElementById('tmplModalTitle').textContent='Add Template';document.getElementById('tmplm-name').value='';document.getElementById('tmplm-body').value='';document.getElementById('tmplm-editIdx').value='';openOverlay('tmplModal');}
-function openEditTmpl(i){document.getElementById('tmplModalTitle').textContent='Edit Template';document.getElementById('tmplm-name').value=TMPLS[i].name;document.getElementById('tmplm-body').value=TMPLS[i].body||'';document.getElementById('tmplm-editIdx').value=i;openOverlay('tmplModal');}
-function saveTmpl(){const name=document.getElementById('tmplm-name').value.trim();if(!name)return;const body=document.getElementById('tmplm-body').value;const editIdx=document.getElementById('tmplm-editIdx').value;const obj={id:editIdx!==''?TMPLS[parseInt(editIdx)].id:uid(),name,body};if(editIdx!=='')TMPLS[parseInt(editIdx)]=obj;else TMPLS.push(obj);closeOverlay('tmplModal');renderTmpls();}
-function delTmpl(i){TMPLS.splice(i,1);renderTmpls();}
-renderTmpls();
+function openAddTmpl(){
+  document.getElementById('tmplModalTitle').textContent='Add Template';
+  document.getElementById('tmplm-name').value='';
+  document.getElementById('tmplm-body').value='';
+  document.getElementById('tmplm-editIdx').value='';
+  renderTmplTabs();
+  const sel=document.getElementById('tmplm-tab');
+  if(sel&&currentTmplTab!=='tt-all')sel.value=currentTmplTab;
+  openOverlay('tmplModal');
+}
+function openEditTmpl(i){
+  const t=TMPLS[i];if(!t)return;
+  document.getElementById('tmplModalTitle').textContent='Edit Template';
+  document.getElementById('tmplm-name').value=t.name;
+  document.getElementById('tmplm-body').value=t.body||'';
+  document.getElementById('tmplm-editIdx').value=i;
+  renderTmplTabs();
+  const sel=document.getElementById('tmplm-tab');
+  if(sel&&t.tab)sel.value=t.tab;
+  openOverlay('tmplModal');
+}
+function saveTmpl(){
+  const name=document.getElementById('tmplm-name').value.trim();if(!name)return;
+  const tabEl=document.getElementById('tmplm-tab');
+  const tab=tabEl?tabEl.value:'tt-gen';
+  const catEl=document.getElementById('tmplm-cat');
+  const cat=catEl?catEl.value.trim():'';
+  const body=document.getElementById('tmplm-body').value;
+  const editIdx=document.getElementById('tmplm-editIdx').value;
+  const obj={id:editIdx!==''?TMPLS[parseInt(editIdx)].id:uid(),name,tab,cat,body};
+  if(editIdx!=='')TMPLS[parseInt(editIdx)]=obj;else TMPLS.push(obj);
+  lsSet('rs3_tmpls',TMPLS);closeOverlay('tmplModal');renderTmpls();
+}
+function delTmpl(i){if(!confirm('Delete this template?'))return;TMPLS.splice(i,1);lsSet('rs3_tmpls',TMPLS);renderTmpls();}
+renderTmplTabs();renderTmpls();
 /* ════ PROJECTS ════ */
 let PROJ_COLS=lsGet('rs3_proj_cols',[
   {id:'ns',label:'Not Started',style:'pch-ns',cards:[{id:uid(),text:'Make pitch for new Pay Rubric Distribution for Yendri',icon:'🌻',notes:'',due:''},{id:uid(),text:'FAQ Area',icon:'🍎',notes:'',due:''}]},
