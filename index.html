@@ -1460,9 +1460,8 @@ function saveTmplTab(){
   else{const newId='tt-'+uid();TMPL_TABS.push({id:newId,name});currentTmplTab=newId;}
   lsSet('rs3_tmpl_tabs',TMPL_TABS);closeOverlay('tmplTabModal');renderTmplTabs();renderTmpls();
 }
-   
-function renderTmpls(){
-   function tmplCatColor(t){
+
+function tmplCatColor(t){
   // If template has a stored color, derive text/border from it
   if(t.catColor){
     var bg=t.catColor;
@@ -1502,6 +1501,7 @@ function darkenHex(hex,pct){
   return'#'+[r,g,b].map(function(v){return Math.round(Math.max(0,v*f)).toString(16).padStart(2,'0');}).join('');
 }
    
+function renderTmpls(){   
   const g=document.getElementById('tmplGrid');
   const visible=currentTmplTab==='tt-all'?TMPLS:TMPLS.filter(function(t){return t.tab===currentTmplTab;});
   if(!visible.length){g.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.86rem;text-align:center;padding:20px;">No templates here. Click &quot;+ Template&quot; to add one.</div>';lsSet('rs3_tmpls',TMPLS);return;}
@@ -1847,10 +1847,10 @@ function applyFont(v){THEME.font=v;applyTheme();}
 function applyRadius(v){THEME.radius=parseInt(v);applyTheme();}
 function saveTheme(){THEME.title=document.getElementById('siteTitleInp').value.trim()||'ABA Squad · RisingSpurs';document.getElementById('siteTitle').textContent=THEME.title;lsSet('rs3_theme',THEME);closeOverlay('themeModal');}
 applyTheme();
-if(sheetsUrl)document.getElementById('syncNowBtn').style.display='';
 
 /* ════ GOOGLE SHEETS ════ */
 let sheetsUrl=localStorage.getItem('rs3_sheets_url')||'';
+if(sheetsUrl)document.getElementById('syncNowBtn').style.display='';
 if(sheetsUrl)updateSync(true);
 function openSheetsModal(){document.getElementById('sheetsUrlInp').value=sheetsUrl;openOverlay('sheetsModal');}
 function saveSheetsUrl(){
