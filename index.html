@@ -1665,7 +1665,7 @@ function makeKPIDefault(){const cats=[{id:uid(),name:'Scheduled Interview',ci:0,
 let KS=lsGet('rs3_kpi',null)||makeKPIDefault();
 let kpiTab='tracker',kpiExpMode='csv';
 function kpiEnsureDef(){if(!KS.cats.length){KS.defaultCat=null;return;}if(!KS.defaultCat||!KS.cats.find(c=>c.id===KS.defaultCat))KS.defaultCat=KS.cats[0].id;}
-function kpiSave(){kpiEnsureDef();lsSet('rs3_kpi',KS);syncToSheets('kpi');}
+function kpiSave(){kpiEnsureDef();lsSet('rs3_kpi',KS);}
 function kpiTotal(){return KS.cats.reduce((s,c)=>s+c.items.length,0);}
 function kpiDest(){return KS.sel||KS.defaultCat||(KS.cats[0]?.id)||null;}
 function kpiEsc(s){return esc(s);}
@@ -1684,10 +1684,10 @@ function renderKPI(){
 }
 
 function kpiSwTab(t){kpiTab=t;renderKPI();}
-function kpiAdj(d){const id=kpiDest();if(!id)return;const cat=KS.cats.find(c=>c.id===id);if(!cat)return;if(d>0)cat.items.push({id:uid(),name:''});else if(cat.items.length>0)cat.items.pop();renderKPI();}
+function kpiAdj(d){const id=kpiDest();if(!id)return;const cat=KS.cats.find(c=>c.id===id);if(!cat)return;if(d>0)cat.items.push({id:uid(),name:''});else if(cat.items.length>0)cat.items.pop();renderKPI();syncToSheets('kpi');}
 function kpiSelCat(id){KS.sel=(KS.sel===id)?null:id;renderKPI();}
 function kpiSetDefault(id){if(!KS.cats.find(c=>c.id===id))return;KS.defaultCat=id;renderKPI();}
-function kpiAddItem(){const id=kpiDest();if(!id)return;const cat=KS.cats.find(c=>c.id===id);if(!cat)return;const inp=document.getElementById('kpiNewName');cat.items.push({id:uid(),name:(inp?.value||'').trim()});if(inp)inp.value='';renderKPI();}
+function kpiAddItem(){const id=kpiDest();if(!id)return;const cat=KS.cats.find(c=>c.id===id);if(!cat)return;const inp=document.getElementById('kpiNewName');cat.items.push({id:uid(),name:(inp?.value||'').trim()});if(inp)inp.value='';renderKPI();syncToSheets('kpi');}
 function kpiAddCat(){const inp=document.getElementById('kpiNewCat');const name=(inp?.value||'').trim();if(!name)return;KS.cats.push({id:uid(),name,ci:KS.cats.length%KPI_PAL.length,items:[]});if(!KS.defaultCat)KS.defaultCat=KS.cats[KS.cats.length-1].id;if(inp)inp.value='';renderKPI();}
 function kpiDelCat(id){KS.cats=KS.cats.filter(c=>c.id!==id);if(KS.sel===id)KS.sel=null;kpiEnsureDef();renderKPI();}
 function kpiRenCat(id,n){const c=KS.cats.find(c=>c.id===id);if(c)c.name=n;kpiSave();}
@@ -1858,7 +1858,11 @@ function saveSheetsUrl(){
   closeOverlay('sheetsModal');
   updateSync(!!sheetsUrl);
   document.getElementById('syncNowBtn').style.display=sheetsUrl?'':'none';
-  if(sheetsUrl)syncToSheets('initial');
+  if(sheetsUrl){
+    // Show immediate feedback then sync
+    document.getElementById('syncText').textContent='Connected! Testing sync…';
+    setTimeout(function(){syncToSheets('initial');},300);
+  }
 }
 function updateSync(on){document.getElementById('syncDot').className='sync-dot'+(on?'':' off');document.getElementById('syncText').textContent=on?'Google Sheets connected — syncing automatically':'Google Sheets not connected — data saves locally only';}
 
@@ -1872,7 +1876,7 @@ function syncToSheets(label){
   const calls=[
     {action:'syncTasks',tasks:TASKS,timestamp:ts},
     {action:'syncKPI',kpi:KS,timestamp:ts},
-    {action:'syncNotes',notes:document.getElementById('caseloadNotes').value,timestamp:ts}
+    {action:'syncNotes',notes:(document.getElementById('caseloadNotes')||{}).value||'',timestamp:ts}
   ];
   Promise.all(calls.map(function(body){
     return fetch(sheetsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}}).catch(function(){});
