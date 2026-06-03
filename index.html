@@ -355,17 +355,6 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 .rub-divider{width:1px;height:26px;background:var(--border);}
 
 /* ════════ TEMPLATES ════════ */
-.tmpl-grid{display:flex;flex-direction:column;gap:6px;}
-.tmpl-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--warm);transition:all .15s;}
-.tmpl-row:hover{background:var(--sage-p);border-color:var(--sage);}
-.tmpl-name{flex:1;font-size:.88rem;}
-.tmpl-copy-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:3px 9px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--ink-m);cursor:pointer;transition:all .12s;white-space:nowrap;}
-.tmpl-copy-btn:hover{background:var(--moss);color:#fff;border-color:var(--moss);}
-.tmpl-del-btn{width:20px;height:20px;border-radius:5px;border:1px solid var(--border);background:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);opacity:0;transition:all .12s;}
-.tmpl-row:hover .tmpl-del-btn{opacity:1;}
-.tmpl-del-btn:hover{background:#ffe5e5;color:var(--blush);}
-
-/* ════════ TEMPLATES ════════ */
 .tmpl-tabs-bar{display:flex;gap:0;flex-wrap:wrap;border-bottom:1.5px solid var(--border);background:var(--parchment);}
 .tmpl-tab-btn{font-family:'Crimson Pro',serif;font-size:.82rem;padding:7px 14px;border:none;background:none;color:var(--ink-m);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;white-space:nowrap;}
 .tmpl-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--paper);}
@@ -1451,6 +1440,24 @@ function saveTmplTab(){
   else{const newId='tt-'+uid();TMPL_TABS.push({id:newId,name});currentTmplTab=newId;}
   lsSet('rs3_tmpl_tabs',TMPL_TABS);closeOverlay('tmplTabModal');renderTmplTabs();renderTmpls();
 }
+
+function tmplCatColor(cat){
+  const palettes=[
+    {bg:'#dce8f0',tx:'#2a6080',border:'#b8d0e0'},
+    {bg:'#e0dced',tx:'#5a4a80',border:'#c0b8d8'},
+    {bg:'#eaf0e4',tx:'#4a5e38',border:'#b8d0a8'},
+    {bg:'#f0e8d4',tx:'#7a5c3a',border:'#d8c0a0'},
+    {bg:'#f8e5e2',tx:'#c47a6a',border:'#e8c4b8'},
+    {bg:'#e8e5f0',tx:'#7a6a9a',border:'#c4bcd8'},
+    {bg:'#f5eddc',tx:'#b8922a',border:'#e8d090'},
+    {bg:'#e0f0f0',tx:'#2a7a7a',border:'#a8d8d8'},
+  ];
+  // Hash the cat name to pick a consistent color
+  let hash=0;
+  for(let i=0;i<cat.length;i++)hash=(hash*31+cat.charCodeAt(i))&0xffff;
+  return palettes[hash%palettes.length];
+}
+   
 function renderTmpls(){
   const g=document.getElementById('tmplGrid');
   const visible=currentTmplTab==='tt-all'?TMPLS:TMPLS.filter(function(t){return t.tab===currentTmplTab;});
@@ -1460,7 +1467,7 @@ function renderTmpls(){
     const realIdx=TMPLS.indexOf(t);
     html+='<div class="tmpl-row">';
     html+='<span class="tmpl-name">'+esc(t.name)+'</span>';
-    if(t.cat){html+='<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;background:var(--border-l);color:var(--ink-m);border:1px solid var(--border);white-space:nowrap;flex-shrink:0;">'+esc(t.cat)+'</span>';}
+    if(t.cat){const tc=tmplCatColor(t.cat);html+='<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;background:'+tc.bg+';color:'+tc.tx+';border:1px solid '+tc.border+';white-space:nowrap;flex-shrink:0;">'+esc(t.cat)+'</span>';}
     html+='<button class="tmpl-copy-btn" data-id="'+t.id+'" onclick="copyTmplById(this.dataset.id,this)">Copy</button>';
     html+='<button class="tmpl-act-btn" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))">&#9999;</button>';
     html+='<button class="tmpl-act-btn del" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))">&#x2715;</button>';
