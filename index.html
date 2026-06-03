@@ -373,6 +373,17 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 .tmpl-act-btn:hover{background:var(--sage-p);color:var(--moss);border-color:var(--sage);}
 .tmpl-act-btn.del:hover{background:#ffe5e5;color:var(--blush);border-color:var(--blush-l);}
 
+/* ════════ QUICK LINKS ════════ */
+.ql-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px;}
+.ql-item{display:flex;align-items:center;gap:4px;position:relative;min-width:0;}
+.ql-link{flex:1;display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:10px;border:1.5px solid var(--border);background:var(--warm);color:var(--ink);text-decoration:none;font-size:.82rem;font-family:'Crimson Pro',serif;font-weight:500;transition:all .15s;min-width:0;overflow:hidden;}
+.ql-link:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-s);}
+.ql-link .ql-icon{font-size:.95rem;flex-shrink:0;line-height:1;}
+.ql-link .ql-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.ql-del-btn{width:20px;height:20px;border-radius:5px;border:none;background:none;color:var(--ink-f);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .12s;flex-shrink:0;padding:0;}
+.ql-item:hover .ql-del-btn{opacity:1;}
+.ql-del-btn:hover{background:#ffe5e5;color:var(--blush);}
+
 /* ════════ PROJECTS ════════ */
 .proj-board{display:flex;gap:10px;padding:12px;overflow-x:auto;}
 .proj-col{min-width:160px;flex:1;display:flex;flex-direction:column;gap:7px;}
