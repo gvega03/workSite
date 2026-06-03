@@ -811,7 +811,12 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
     <h3 id="tmplModalTitle">Add Template</h3>
     <div class="form-row"><div class="form-label">Name</div><input class="modal-inp" id="tmplm-name" placeholder="e.g. Rescheduling Message"/></div>
     <div class="form-row"><div class="form-label">Tab</div><select class="modal-sel" id="tmplm-tab"></select></div>
-    <div class="form-row"><div class="form-label">Category Tag (optional)</div><input class="modal-inp" id="tmplm-cat" placeholder="e.g. Daily, Follow Up, Admin..."/></div>
+    <div class="form-row"><div class="form-label">Category Tag (optional)</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input class="modal-inp" id="tmplm-cat" placeholder="e.g. Daily, Follow Up, Admin..." style="margin:0;flex:1;"/>
+        <input type="color" id="tmplm-cat-color" value="#dce8f0" title="Tag background color" style="width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:var(--cream);flex-shrink:0;"/>
+      </div>
+    </div>
     <div class="form-row"><div class="form-label">Content (to copy)</div><textarea class="modal-ta" id="tmplm-body" placeholder="Paste the template text here..." style="min-height:120px;"></textarea></div>
     <input type="hidden" id="tmplm-editIdx"/>
     <div class="modal-btns">
@@ -1453,22 +1458,45 @@ function saveTmplTab(){
 }
    
 function renderTmpls(){
-   function tmplCatColor(cat){
-     const palettes=[
-       {bg:'#dce8f0',tx:'#2a6080',border:'#b8d0e0'},
-       {bg:'#e0dced',tx:'#5a4a80',border:'#c0b8d8'},
-       {bg:'#eaf0e4',tx:'#4a5e38',border:'#b8d0a8'},
-       {bg:'#f0e8d4',tx:'#7a5c3a',border:'#d8c0a0'},
-       {bg:'#f8e5e2',tx:'#c47a6a',border:'#e8c4b8'},
-       {bg:'#e8e5f0',tx:'#7a6a9a',border:'#c4bcd8'},
-       {bg:'#f5eddc',tx:'#b8922a',border:'#e8d090'},
-       {bg:'#e0f0f0',tx:'#2a7a7a',border:'#a8d8d8'},
-     ];
-     // Hash the cat name to pick a consistent color
-     let hash=0;
-     for(let i=0;i<cat.length;i++)hash=(hash*31+cat.charCodeAt(i))&0xffff;
-     return palettes[hash%palettes.length];
-   }
+   function tmplCatColor(t){
+  // If template has a stored color, derive text/border from it
+  if(t.catColor){
+    var bg=t.catColor;
+    var tx=hexToReadable(bg);
+    var border=darkenHex(bg,20);
+    return{bg:bg,tx:tx,border:border};
+  }
+  // Fallback: hash-based palette
+  var cat=t.cat||'';
+  var palettes=[
+    {bg:'#dce8f0',tx:'#2a6080',border:'#b8d0e0'},
+    {bg:'#e0dced',tx:'#5a4a80',border:'#c0b8d8'},
+    {bg:'#eaf0e4',tx:'#4a5e38',border:'#b8d0a8'},
+    {bg:'#f0e8d4',tx:'#7a5c3a',border:'#d8c0a0'},
+    {bg:'#f8e5e2',tx:'#c47a6a',border:'#e8c4b8'},
+    {bg:'#e8e5f0',tx:'#7a6a9a',border:'#c4bcd8'},
+    {bg:'#f5eddc',tx:'#b8922a',border:'#e8d090'},
+    {bg:'#e0f0f0',tx:'#2a7a7a',border:'#a8d8d8'},
+  ];
+  var hash=0;
+  for(var i=0;i<cat.length;i++)hash=(hash*31+cat.charCodeAt(i))&0xffff;
+  return palettes[hash%palettes.length];
+}
+function hexToReadable(hex){
+  // Returns dark or light text color based on background luminance
+  var r=parseInt(hex.slice(1,3),16);
+  var g=parseInt(hex.slice(3,5),16);
+  var b=parseInt(hex.slice(5,7),16);
+  var lum=(0.299*r+0.587*g+0.114*b)/255;
+  return lum>0.55?'#3a2a1a':'#faf7f1';
+}
+function darkenHex(hex,pct){
+  var r=parseInt(hex.slice(1,3),16);
+  var g=parseInt(hex.slice(3,5),16);
+  var b=parseInt(hex.slice(5,7),16);
+  var f=(100-pct)/100;
+  return'#'+[r,g,b].map(function(v){return Math.round(Math.max(0,v*f)).toString(16).padStart(2,'0');}).join('');
+}
    
   const g=document.getElementById('tmplGrid');
   const visible=currentTmplTab==='tt-all'?TMPLS:TMPLS.filter(function(t){return t.tab===currentTmplTab;});
@@ -1478,7 +1506,7 @@ function renderTmpls(){
     const realIdx=TMPLS.indexOf(t);
     html+='<div class="tmpl-row">';
     html+='<span class="tmpl-name">'+esc(t.name)+'</span>';
-    if(t.cat){var tc=tmplCatColor(t.cat);html+='<span class="tmpl-cat-tag" style="background:'+tc.bg+';color:'+tc.tx+';border-color:'+tc.border+'">'+esc(t.cat)+'</span>';}
+    if(t.cat){var tc=tmplCatColor(t);html+='<span class="tmpl-cat-tag" style="background:'+tc.bg+';color:'+tc.tx+';border-color:'+tc.border+'">'+esc(t.cat)+'</span>';}
     html+='<button class="tmpl-copy-btn" data-id="'+t.id+'" onclick="copyTmplById(this.dataset.id,this)">Copy</button>';
     html+='<button class="tmpl-act-btn" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))">&#9999;</button>';
     html+='<button class="tmpl-act-btn del" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))">&#x2715;</button>';
@@ -1495,6 +1523,8 @@ function copyTmplById(id,btn){
 function openAddTmpl(){
   document.getElementById('tmplModalTitle').textContent='Add Template';
   document.getElementById('tmplm-name').value='';
+  document.getElementById('tmplm-cat').value='';
+  document.getElementById('tmplm-cat-color').value='#dce8f0';
   document.getElementById('tmplm-body').value='';
   document.getElementById('tmplm-editIdx').value='';
   renderTmplTabs();
@@ -1506,6 +1536,8 @@ function openEditTmpl(i){
   const t=TMPLS[i];if(!t)return;
   document.getElementById('tmplModalTitle').textContent='Edit Template';
   document.getElementById('tmplm-name').value=t.name;
+  document.getElementById('tmplm-cat').value=t.cat||'';
+  document.getElementById('tmplm-cat-color').value=t.catColor||'#dce8f0';
   document.getElementById('tmplm-body').value=t.body||'';
   document.getElementById('tmplm-editIdx').value=i;
   renderTmplTabs();
@@ -1519,9 +1551,10 @@ function saveTmpl(){
   const tab=tabEl?tabEl.value:'tt-gen';
   const catEl=document.getElementById('tmplm-cat');
   const cat=catEl?catEl.value.trim():'';
+  const catColor=document.getElementById('tmplm-cat-color').value||'';
   const body=document.getElementById('tmplm-body').value;
   const editIdx=document.getElementById('tmplm-editIdx').value;
-  const obj={id:editIdx!==''?TMPLS[parseInt(editIdx)].id:uid(),name,tab,cat,body};
+  const obj={id:editIdx!==''?TMPLS[parseInt(editIdx)].id:uid(),name,tab,cat,catColor,body};
   if(editIdx!=='')TMPLS[parseInt(editIdx)]=obj;else TMPLS.push(obj);
   lsSet('rs3_tmpls',TMPLS);closeOverlay('tmplModal');renderTmpls();
 }
