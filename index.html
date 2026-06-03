@@ -365,16 +365,24 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 .tmpl-row:hover .tmpl-del-btn{opacity:1;}
 .tmpl-del-btn:hover{background:#ffe5e5;color:var(--blush);}
 
-/* ════════ QUICK LINKS ════════ */
-.ql-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px;}
-.ql-item{display:flex;align-items:center;gap:6px;position:relative;}
-.ql-link{flex:1;display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:10px;border:1.5px solid var(--border);background:var(--warm);color:var(--ink);text-decoration:none;font-size:.82rem;font-family:'Crimson Pro',serif;font-weight:500;transition:all .15s;min-width:0;}
-.ql-link:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-s);}
-.ql-link .ql-icon{font-size:.95rem;flex-shrink:0;}
-.ql-link .ql-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ql-del-btn{width:22px;height:22px;border-radius:5px;border:none;background:none;color:var(--ink-f);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .12s;flex-shrink:0;}
-.ql-item:hover .ql-del-btn{opacity:1;}
-.ql-del-btn:hover{background:#ffe5e5;color:var(--blush);}
+/* ════════ TEMPLATES ════════ */
+.tmpl-tabs-bar{display:flex;gap:0;flex-wrap:wrap;border-bottom:1.5px solid var(--border);background:var(--parchment);}
+.tmpl-tab-btn{font-family:'Crimson Pro',serif;font-size:.82rem;padding:7px 14px;border:none;background:none;color:var(--ink-m);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;white-space:nowrap;}
+.tmpl-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--paper);}
+.tmpl-tab-btn:hover:not(.active){background:var(--sage-p);color:var(--moss);}
+.tmpl-tab-add{font-family:'Crimson Pro',serif;font-size:.78rem;padding:7px 12px;border:none;background:none;color:var(--ink-f);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .15s;white-space:nowrap;}
+.tmpl-tab-add:hover{background:var(--sage-p);color:var(--moss);}
+.tmpl-grid{display:flex;flex-direction:column;gap:6px;}
+.tmpl-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--warm);transition:all .15s;}
+.tmpl-row:hover{background:var(--sage-p);border-color:var(--sage);}
+.tmpl-name{flex:1;font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tmpl-cat-tag{font-family:'DM Mono',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;background:var(--border-l);color:var(--ink-m);white-space:nowrap;flex-shrink:0;border:1px solid var(--border);}
+.tmpl-copy-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:3px 9px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--ink-m);cursor:pointer;transition:all .12s;white-space:nowrap;flex-shrink:0;}
+.tmpl-copy-btn:hover{background:var(--moss);color:#fff;border-color:var(--moss);}
+.tmpl-act-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);opacity:0;transition:all .12s;flex-shrink:0;}
+.tmpl-row:hover .tmpl-act-btn{opacity:1;}
+.tmpl-act-btn:hover{background:var(--sage-p);color:var(--moss);border-color:var(--sage);}
+.tmpl-act-btn.del:hover{background:#ffe5e5;color:var(--blush);border-color:var(--blush-l);}
 
 /* ════════ PROJECTS ════════ */
 .proj-board{display:flex;gap:10px;padding:12px;overflow-x:auto;}
@@ -627,7 +635,7 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
           <button class="sm-btn outline" onclick="openAddTmpl()">+ Template</button>
         </div>
       </div>
-      <div style="display:flex;gap:0;flex-wrap:wrap;border-bottom:1.5px solid var(--border);background:var(--parchment);" id="tmplTabsBar"></div>
+      <div class="tmpl-tabs-bar" id="tmplTabsBar"></div>
       <div class="card-body">
         <div class="tmpl-grid" id="tmplGrid"></div>
       </div>
@@ -1454,8 +1462,8 @@ function renderTmpls(){
     html+='<span class="tmpl-name">'+esc(t.name)+'</span>';
     if(t.cat){html+='<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;background:var(--border-l);color:var(--ink-m);border:1px solid var(--border);white-space:nowrap;flex-shrink:0;">'+esc(t.cat)+'</span>';}
     html+='<button class="tmpl-copy-btn" data-id="'+t.id+'" onclick="copyTmplById(this.dataset.id,this)">Copy</button>';
-    html+='<button style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-size:.62rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))">&#9999;</button>';
-    html+='<button style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:var(--ink-m);" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))">&#x2715;</button>';
+    html+='<button class="tmpl-act-btn" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))">&#9999;</button>';
+    html+='<button class="tmpl-act-btn del" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))">&#x2715;</button>';
     html+='</div>';
   });
   g.innerHTML=html;
