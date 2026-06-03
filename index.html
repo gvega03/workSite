@@ -506,8 +506,11 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 
 <!-- Sync bar -->
 <div class="sync-bar">
-  <div class="sync-status"><div class="sync-dot off" id="syncDot"></div><span id="syncText">Google Sheets not connected — data saves locally only</span></div>
-  <button class="sm-btn outline" onclick="openSheetsModal()">Connect Sheets</button>
+  <div class="sync-status"><div class="sync-dot off" id="syncDot"></div><span id="syncText">Google Sheets not connected — data saves locally only</span><span class="saved-flash" id="syncFlash">✓ Synced</span></div>
+  <div style="display:flex;gap:8px;">
+    <button class="sm-btn outline" onclick="syncToSheets('manual')" id="syncNowBtn" style="display:none;">↑ Sync Now</button>
+    <button class="sm-btn outline" onclick="openSheetsModal()">Connect Sheets</button>
+  </div>
 </div>
 
 <!-- ████ TOP STRIP ████ -->
@@ -1141,7 +1144,7 @@ renderFAQs();
 
 /* Notes */
 document.getElementById('caseloadNotes').value=lsGet('rs3_notes','')||'';
-function saveNotes(){lsSet('rs3_notes',document.getElementById('caseloadNotes').value);const f=document.getElementById('noteFlash');f.classList.add('show');setTimeout(()=>f.classList.remove('show'),2000);}
+function saveNotes(){lsSet('rs3_notes',document.getElementById('caseloadNotes').value);const f=document.getElementById('noteFlash');f.classList.add('show');setTimeout(()=>f.classList.remove('show'),2000);syncToSheets('notes');}
 
 /* ════ TASK CATEGORIES ════ */
 const DEFAULT_CATS=[
@@ -1331,7 +1334,7 @@ function saveTask(){
   const editId=document.getElementById('tm-editId').value;
   if(editId){const t=TASKS.find(t=>t.id===editId);if(t)Object.assign(t,{text,cat,comment,recur,day});}
   else TASKS.push({id:uid(),text,cat,day,done:false,comment,recur,created:Date.now()});
-  closeOverlay('taskModal');renderTasks();
+  closeOverlay('taskModal');renderTasks();syncToSheets('tasks');
 }
 
 function deleteTask(id){TASKS=TASKS.filter(t=>t.id!==id);lsSet('rs3_tasks',TASKS);renderTasks();}
@@ -1662,7 +1665,7 @@ function makeKPIDefault(){const cats=[{id:uid(),name:'Scheduled Interview',ci:0,
 let KS=lsGet('rs3_kpi',null)||makeKPIDefault();
 let kpiTab='tracker',kpiExpMode='csv';
 function kpiEnsureDef(){if(!KS.cats.length){KS.defaultCat=null;return;}if(!KS.defaultCat||!KS.cats.find(c=>c.id===KS.defaultCat))KS.defaultCat=KS.cats[0].id;}
-function kpiSave(){kpiEnsureDef();lsSet('rs3_kpi',KS);}
+function kpiSave(){kpiEnsureDef();lsSet('rs3_kpi',KS);syncToSheets('kpi');}
 function kpiTotal(){return KS.cats.reduce((s,c)=>s+c.items.length,0);}
 function kpiDest(){return KS.sel||KS.defaultCat||(KS.cats[0]?.id)||null;}
 function kpiEsc(s){return esc(s);}
@@ -1844,13 +1847,43 @@ function applyFont(v){THEME.font=v;applyTheme();}
 function applyRadius(v){THEME.radius=parseInt(v);applyTheme();}
 function saveTheme(){THEME.title=document.getElementById('siteTitleInp').value.trim()||'ABA Squad · RisingSpurs';document.getElementById('siteTitle').textContent=THEME.title;lsSet('rs3_theme',THEME);closeOverlay('themeModal');}
 applyTheme();
+if(sheetsUrl)document.getElementById('syncNowBtn').style.display='';
 
 /* ════ GOOGLE SHEETS ════ */
 let sheetsUrl=localStorage.getItem('rs3_sheets_url')||'';
 if(sheetsUrl)updateSync(true);
 function openSheetsModal(){document.getElementById('sheetsUrlInp').value=sheetsUrl;openOverlay('sheetsModal');}
-function saveSheetsUrl(){sheetsUrl=document.getElementById('sheetsUrlInp').value.trim();localStorage.setItem('rs3_sheets_url',sheetsUrl);closeOverlay('sheetsModal');updateSync(!!sheetsUrl);}
-function updateSync(on){document.getElementById('syncDot').className='sync-dot'+(on?'':' off');document.getElementById('syncText').textContent=on?'Google Sheets connected — data syncs automatically':'Google Sheets not connected — data saves locally only';}
+function saveSheetsUrl(){
+  sheetsUrl=document.getElementById('sheetsUrlInp').value.trim();
+  localStorage.setItem('rs3_sheets_url',sheetsUrl);
+  closeOverlay('sheetsModal');
+  updateSync(!!sheetsUrl);
+  document.getElementById('syncNowBtn').style.display=sheetsUrl?'':'none';
+  if(sheetsUrl)syncToSheets('initial');
+}
+function updateSync(on){document.getElementById('syncDot').className='sync-dot'+(on?'':' off');document.getElementById('syncText').textContent=on?'Google Sheets connected — syncing automatically':'Google Sheets not connected — data saves locally only';}
+
+function syncToSheets(label){
+  if(!sheetsUrl)return;
+  const ts=new Date().toISOString();
+  const statusEl=document.getElementById('syncText');
+  const dotEl=document.getElementById('syncDot');
+  dotEl.style.background='var(--gold)';
+  statusEl.textContent='Syncing'+(label?' ('+label+')':'')+'…';
+  const calls=[
+    {action:'syncTasks',tasks:TASKS,timestamp:ts},
+    {action:'syncKPI',kpi:KS,timestamp:ts},
+    {action:'syncNotes',notes:document.getElementById('caseloadNotes').value,timestamp:ts}
+  ];
+  Promise.all(calls.map(function(body){
+    return fetch(sheetsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}}).catch(function(){});
+  })).then(function(){
+    dotEl.style.background='';
+    updateSync(true);
+    const flash=document.getElementById('syncFlash');
+    if(flash){flash.classList.add('show');setTimeout(function(){flash.classList.remove('show');},2500);}
+  });
+}
 </script>
 </body>
 </html>
