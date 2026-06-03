@@ -1386,16 +1386,28 @@ let TMPLS=lsGet('rs3_tmpls',[
 ]);
 function renderTmpls(){
   const g=document.getElementById('tmplGrid');
-  g.innerHTML=TMPLS.map((t,i)=>`
-    <div class="tmpl-row">
-      <span class="tmpl-name">${esc(t.name)}</span>
-      <button class="tmpl-copy-btn" onclick="copyTmpl(${i})">Copy</button>
-      <button class="sm-btn outline" style="font-size:.7rem;padding:3px 8px;" onclick="openEditTmpl(${i})">✏</button>
-      <button class="tmpl-del-btn" onclick="delTmpl(${i})">✕</button>
-    </div>`).join('');
+  const visible=currentTmplTab==='tt-all'?TMPLS:TMPLS.filter(function(t){return t.tab===currentTmplTab;});
+  if(!visible.length){g.innerHTML='<div class="tmpl-empty">No templates here. Click "+ Template" to add one.</div>';lsSet('rs3_tmpls',TMPLS);return;}
+  let html='';
+  visible.forEach(function(t,vi){
+    const realIdx=TMPLS.indexOf(t);
+    html+='<div class="tmpl-row">';
+    html+='<span class="tmpl-name">'+esc(t.name)+'</span>';
+    if(t.cat){html+='<span class="tmpl-cat-tag">'+esc(t.cat)+'</span>';}
+    html+='<button class="tmpl-copy-btn" data-id="'+t.id+'" onclick="copyTmplById(this.dataset.id,this)">Copy</button>';
+    html+='<button class="tmpl-act-btn" data-idx="'+realIdx+'" onclick="openEditTmpl(parseInt(this.dataset.idx))" title="Edit">&#9999;</button>';
+    html+='<button class="tmpl-act-btn del" data-idx="'+realIdx+'" onclick="delTmpl(parseInt(this.dataset.idx))" title="Delete">&#x2715;</button>';
+    html+='</div>';
+  });
+  g.innerHTML=html;
   lsSet('rs3_tmpls',TMPLS);
 }
-function copyTmpl(i){try{navigator.clipboard.writeText(TMPLS[i].body||'');}catch(e){const ta=document.createElement('textarea');ta.value=TMPLS[i].body;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}const btn=document.querySelectorAll('.tmpl-copy-btn')[i];if(btn){const orig=btn.textContent;btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent=orig,1500);}}
+function copyTmplById(id,btn){
+  const t=TMPLS.find(function(x){return x.id===id;});
+  if(!t)return;
+  try{navigator.clipboard.writeText(t.body||'');}catch(e){const ta=document.createElement('textarea');ta.value=t.body||'';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+  if(btn){const orig=btn.textContent;btn.textContent='✓ Copied!';setTimeout(function(){btn.textContent=orig;},1500);}
+}
 function openAddTmpl(){document.getElementById('tmplModalTitle').textContent='Add Template';document.getElementById('tmplm-name').value='';document.getElementById('tmplm-body').value='';document.getElementById('tmplm-editIdx').value='';openOverlay('tmplModal');}
 function openEditTmpl(i){document.getElementById('tmplModalTitle').textContent='Edit Template';document.getElementById('tmplm-name').value=TMPLS[i].name;document.getElementById('tmplm-body').value=TMPLS[i].body||'';document.getElementById('tmplm-editIdx').value=i;openOverlay('tmplModal');}
 function saveTmpl(){const name=document.getElementById('tmplm-name').value.trim();if(!name)return;const body=document.getElementById('tmplm-body').value;const editIdx=document.getElementById('tmplm-editIdx').value;const obj={id:editIdx!==''?TMPLS[parseInt(editIdx)].id:uid(),name,body};if(editIdx!=='')TMPLS[parseInt(editIdx)]=obj;else TMPLS.push(obj);closeOverlay('tmplModal');renderTmpls();}
