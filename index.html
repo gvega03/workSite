@@ -1850,8 +1850,7 @@ applyTheme();
 
 /* ════ GOOGLE SHEETS ════ */
 let sheetsUrl=localStorage.getItem('rs3_sheets_url')||'';
-if(sheetsUrl)document.getElementById('syncNowBtn').style.display='';
-if(sheetsUrl)updateSync(true);
+if(sheetsUrl){document.getElementById('syncNowBtn').style.display='';updateSync(true);}
 function openSheetsModal(){document.getElementById('sheetsUrlInp').value=sheetsUrl;openOverlay('sheetsModal');}
 function saveSheetsUrl(){
   sheetsUrl=document.getElementById('sheetsUrlInp').value.trim();
