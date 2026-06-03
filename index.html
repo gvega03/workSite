@@ -1038,42 +1038,46 @@ function bonusSave(){lsSet('rs3_bonuses',BONUS_SECTIONS);}
 
 function renderBonuses(){
   const el=document.getElementById('bonusSections');
-  if(!BONUS_SECTIONS.length){el.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.86rem;text-align:center;padding:20px;">No bonus sections yet. Click "+ Add Bonus Section" below.</div>';return;}
-  el.innerHTML=BONUS_SECTIONS.map((sec,si)=>`
-    <div class="bonus-section">
-      <div class="bonus-sec-hdr">
-        <input style="font-family:'Playfair Display',serif;font-size:.92rem;font-style:italic;background:transparent;border:none;border-bottom:1px dashed var(--border);outline:none;flex:1;color:var(--ink);"
-          value="${esc(sec.title)}" oninput="BONUS_SECTIONS[${si}].title=this.value;bonusSave();" placeholder="Section title"/>
-        <button class="bonus-toggle-btn" onclick="bonusAddCol(${si})">+Col</button>
-        <button class="bonus-toggle-btn" onclick="bonusDelSection(${si})">✕</button>
-      </div>
-      ${sec.note?`<div class="bonus-note">${esc(sec.note)}</div>`:''}
-      <input style="font-size:.76rem;background:transparent;border:none;border-bottom:1px dashed var(--border);outline:none;width:100%;color:var(--blush);margin-bottom:8px;font-style:italic;"
-        value="${esc(sec.note)}" oninput="BONUS_SECTIONS[${si}].note=this.value;bonusSave();" placeholder="Add a note (e.g. ** THIS IS ONLY APPLICABLE IN MO **)"/>
-      ${sec.headers.length===0?`<div style="color:var(--ink-f);font-size:.8rem;font-style:italic;text-align:center;padding:8px 0;">Click "+Col" to add columns, then add rows.</div>`:`
-      <div style="overflow-x:auto;">
-        <table class="bonus-t">
-          <thead><tr>
-            <th style="min-width:100px;">
-              <span style="font-size:.58rem;opacity:.6;cursor:pointer;" onclick="bonusAddCol(${si})" title="Add column">⊕</span>
-            </th>
-            ${sec.headers.map((h,hi)=>`<th><div style="display:flex;align-items:center;gap:4px;min-width:80px;">
-              <input class="bonus-cell-inp" value="${esc(h)}" oninput="BONUS_SECTIONS[${si}].headers[${hi}]=this.value;bonusSave();" style="color:var(--ink-m);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;"/>
-              <button onclick="bonusDelCol(${si},${hi})" style="background:none;border:none;cursor:pointer;color:var(--blush);font-size:.6rem;opacity:.5;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">✕</button>
-            </div></th>`).join('')}
-            <th></th>
-          </tr></thead>
-          <tbody>
-            ${sec.rows.map((row,ri)=>`<tr>
-              <td class="row-label"><input class="bonus-label-inp" value="${esc(row.label)}" oninput="BONUS_SECTIONS[${si}].rows[${ri}].label=this.value;bonusSave();" placeholder="Label…"/></td>
-              ${sec.headers.map((_,ci)=>`<td class="money"><input class="bonus-cell-inp" value="${esc(row.cells[ci]||'')}" oninput="BONUS_SECTIONS[${si}].rows[${ri}].cells[${ci}]=this.value;bonusSave();" placeholder="—"/></td>`).join('')}
-              <td><button class="bonus-del-row" onclick="bonusDelRow(${si},${ri})">✕</button></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`}
-      <button class="bonus-add-row-btn" onclick="bonusAddRow(${si})">+ Add Row</button>
-    </div>`).join('');
+  if(!BONUS_SECTIONS.length){el.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.86rem;text-align:center;padding:20px;">No bonus sections yet. Click &quot;+ Add Bonus Section&quot; below.</div>';return;}
+  let html='';
+  BONUS_SECTIONS.forEach(function(sec,si){
+    html+='<div class="bonus-section">';
+    html+='<div class="bonus-sec-hdr">';
+    html+='<input style="font-family:\'Playfair Display\',serif;font-size:.92rem;font-style:italic;background:transparent;border:none;border-bottom:1px dashed var(--border);outline:none;flex:1;color:var(--ink);"';
+    html+=' value="'+esc(sec.title)+'" oninput="BONUS_SECTIONS['+si+'].title=this.value;bonusSave();" placeholder="Section title"/>';
+    html+='<button class="bonus-toggle-btn" onclick="bonusAddCol('+si+')">+Col</button>';
+    html+='<button class="bonus-toggle-btn" onclick="bonusDelSection('+si+')">&#x2715;</button>';
+    html+='</div>';
+    html+='<input style="font-size:.76rem;background:transparent;border:none;border-bottom:1px dashed var(--border);outline:none;width:100%;color:var(--blush);margin-bottom:8px;font-style:italic;"';
+    html+=' value="'+esc(sec.note)+'" oninput="BONUS_SECTIONS['+si+'].note=this.value;bonusSave();" placeholder="Add a note (e.g. THIS IS ONLY APPLICABLE IN MO)"/>';
+    if(sec.note){html+='<div class="bonus-note">'+esc(sec.note)+'</div>';}
+    if(sec.headers.length===0){
+      html+='<div style="color:var(--ink-f);font-size:.8rem;font-style:italic;text-align:center;padding:8px 0;">Click &quot;+Col&quot; to add columns, then add rows below.</div>';
+    } else {
+      html+='<div style="overflow-x:auto;"><table class="bonus-t"><thead><tr>';
+      html+='<th style="min-width:100px;"><span style="font-size:.58rem;opacity:.6;cursor:pointer;" onclick="bonusAddCol('+si+')" title="Add column">&#x2295;</span></th>';
+      sec.headers.forEach(function(h,hi){
+        html+='<th><div style="display:flex;align-items:center;gap:4px;min-width:80px;">';
+        html+='<input class="bonus-cell-inp" value="'+esc(h)+'" oninput="BONUS_SECTIONS['+si+'].headers['+hi+']=this.value;bonusSave();" style="color:var(--ink-m);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;"/>';
+        html+='<button onclick="bonusDelCol('+si+','+hi+')" style="background:none;border:none;cursor:pointer;color:var(--blush);font-size:.6rem;opacity:.5;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">&#x2715;</button>';
+        html+='</div></th>';
+      });
+      html+='<th></th></tr></thead><tbody>';
+      sec.rows.forEach(function(row,ri){
+        html+='<tr>';
+        html+='<td class="row-label"><input class="bonus-label-inp" value="'+esc(row.label)+'" oninput="BONUS_SECTIONS['+si+'].rows['+ri+'].label=this.value;bonusSave();" placeholder="Label..."/></td>';
+        sec.headers.forEach(function(_,ci){
+          html+='<td class="money"><input class="bonus-cell-inp" value="'+esc(row.cells[ci]||'')+'" oninput="BONUS_SECTIONS['+si+'].rows['+ri+'].cells['+ci+']=this.value;bonusSave();" placeholder="--"/></td>';
+        });
+        html+='<td><button class="bonus-del-row" onclick="bonusDelRow('+si+','+ri+')">&#x2715;</button></td>';
+        html+='</tr>';
+      });
+      html+='</tbody></table></div>';
+    }
+    html+='<button class="bonus-add-row-btn" onclick="bonusAddRow('+si+')">+ Add Row</button>';
+    html+='</div>';
+  });
+  el.innerHTML=html;
 }
 renderBonuses();
 
@@ -1375,8 +1379,8 @@ renderQL();
 
 /* ════ TEMPLATES ════ */
 let TMPLS=lsGet('rs3_tmpls',[
-  {id:uid(),name:'Rescheduling',body:'Hi [Name], we'd like to reschedule your interview. Are you available…'},
-  {id:uid(),name:'Leads',body:'Hi [Name], we saw your profile and think you'd be a great fit for…'},
+  {id:uid(),name:'Rescheduling',body:"Hi [Name], we'd like to reschedule your interview. Are you available…"},
+  {id:uid(),name:'Leads',body:"Hi [Name], we saw your profile and think you'd be a great fit for…"},
   {id:uid(),name:'Indeed Template',body:''},
   {id:uid(),name:'Virtual Interview',body:''},
 ]);
