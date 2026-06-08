@@ -488,6 +488,43 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var PASS = 'Gvega@2003';
+  var KEY = 'rs_auth_ok';
+  if(sessionStorage.getItem(KEY) !== '1'){
+    document.addEventListener('DOMContentLoaded', function(){
+      document.getElementById('app').style.display = 'none';
+    });
+    var attempt = 0;
+    function askPassword(){
+      var input = prompt('🌿 RisingSpurs Dashboard\n\nEnter password to continue:');
+      if(input === null){
+        document.body.innerHTML = '<div style="font-family:serif;text-align:center;padding:80px 20px;color:#6b5d4f;"><h2 style="font-family:serif;">🌿 Access Required</h2><p>Refresh the page to try again.</p></div>';
+        return;
+      }
+      if(input === PASS){
+        sessionStorage.setItem(KEY, '1');
+        var app = document.getElementById('app');
+        if(app) app.style.display = '';
+      } else {
+        attempt++;
+        if(attempt >= 3){
+          document.body.innerHTML = '<div style="font-family:serif;text-align:center;padding:80px 20px;color:#6b5d4f;"><h2>🌿 Access Denied</h2><p>Too many incorrect attempts. Refresh to try again.</p></div>';
+        } else {
+          alert('Incorrect password. ' + (3 - attempt) + ' attempt(s) remaining.');
+          askPassword();
+        }
+      }
+    }
+    window.addEventListener('load', function(){
+      var app = document.getElementById('app');
+      if(app) app.style.display = 'none';
+      askPassword();
+    });
+  }
+})();
+</script>
 <div id="app">
 
 <!-- ████ HEADER ████ -->
