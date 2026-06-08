@@ -155,10 +155,13 @@ table.bonus-t{width:100%;border-collapse:collapse;border:1px solid var(--border)
 .task-check{width:17px;height:17px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:3px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--warm);font-size:.65rem;}
 .task-row.done .task-check{background:var(--accent);border-color:var(--accent);color:#fff;}
 .task-main{flex:1;min-width:0;}
-.task-text{font-size:.88rem;line-height:1.4;}
-.task-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;align-items:center;}
-.t-cat{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:500;padding:2px 7px;border-radius:10px;letter-spacing:.03em;}
-.t-recur{font-size:.58rem;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:8px;background:#fff3cd;color:#8a6000;border:1px solid #e6b800;}
+.task-text{font-size:.92rem;line-height:1.45;font-family:'Courier New',monospace;font-weight:700;letter-spacing:-.01em;}
+.task-row.done .task-text{font-weight:400;}
+.task-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.task-top-row .task-text{flex:1;}
+.task-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:4px;}
+.t-cat{font-family:'DM Mono',monospace;font-size:.58rem;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.03em;flex-shrink:0;}
+.t-recur{font-size:.58rem;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:8px;background:#fff3cd;color:#8a6000;border:1px solid #e6b800;flex-shrink:0;}
 .task-comment{font-size:.74rem;color:var(--ink-m);font-style:italic;}
 .task-actions{display:flex;gap:3px;flex-shrink:0;opacity:0;transition:opacity .12s;}
 .task-row:hover .task-actions{opacity:1;}
@@ -751,28 +754,27 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
 
 <!-- Add/Edit Task Modal -->
 <div class="overlay" id="taskModal">
-  <div class="modal-box" style="max-width:500px;">
+  <div class="modal-box" style="max-width:520px;">
     <h3 id="taskModalTitle">Add Task</h3>
     <div class="form-row"><div class="form-label">Task</div><input class="modal-inp" id="tm-text" placeholder="What needs to be done?"/></div>
     <div class="form-row"><div class="form-label">Category</div><select class="modal-sel" id="tm-cat"></select></div>
     <div class="form-row"><div class="form-label">Comment / Notes</div><input class="modal-inp" id="tm-comment" placeholder="Optional notes…"/></div>
-    <div class="form-row"><div class="form-label">Appears On</div>
-      <select class="modal-sel" id="tm-day">
-        <option value="today">Today</option>
-        <option value="tomorrow">Tomorrow</option>
-        <option value="week">This Week (all days)</option>
-      </select>
+
+    <div class="form-row"><div class="form-label">Scheduled Date (optional)</div>
+      <input type="date" class="modal-inp" id="tm-date" placeholder="Leave blank for no specific date"/>
     </div>
+
     <div class="form-row"><div class="form-label">Recurrence</div>
       <select class="modal-sel" id="tm-recur-type" onchange="updateRecurUI()">
         <option value="none">No recurrence — one time</option>
         <option value="daily">Every day</option>
         <option value="days">Specific days of week</option>
-        <option value="xperweek">X times per week</option>
-        <option value="xpermonth">X times per month</option>
+        <option value="monthday">Specific day of month (e.g. every 1st)</option>
+        <option value="monthweekday">Specific weekday of month (e.g. every 2nd Monday)</option>
       </select>
     </div>
-    <!-- Days of week picker (shown when recur=days) -->
+
+    <!-- Days of week picker -->
     <div class="form-row" id="recurDaysRow" style="display:none;">
       <div class="form-label">Days</div>
       <div class="day-check-grid" id="dayCheckGrid">
@@ -784,15 +786,62 @@ table.rubric-t{width:100%;border-collapse:collapse;background:var(--warm);border
         <span class="day-check-btn" data-day="sat" onclick="toggleDayBtn(this)">Sat</span>
         <span class="day-check-btn" data-day="sun" onclick="toggleDayBtn(this)">Sun</span>
       </div>
-    </div>
-    <!-- X times per period (shown when recur=xperweek or xpermonth) -->
-    <div class="form-row" id="recurXRow" style="display:none;">
-      <div class="form-label">Times</div>
+      <div class="form-label" style="margin-top:8px;">Repeat every</div>
       <div class="form-inline">
-        <input type="number" min="1" max="31" class="modal-inp" id="tm-recur-x" style="width:80px;margin:0;" placeholder="2"/>
-        <span id="recurXLabel" style="font-size:.86rem;color:var(--ink-m);">per week</span>
+        <select class="modal-sel" id="tm-recur-weeks" style="margin:0;width:auto;">
+          <option value="1">1 week</option>
+          <option value="2">2 weeks</option>
+          <option value="3">3 weeks</option>
+          <option value="4">4 weeks</option>
+        </select>
       </div>
     </div>
+
+    <!-- Specific day of month (e.g. every 5th) -->
+    <div class="form-row" id="recurMonthDayRow" style="display:none;">
+      <div class="form-label">Day of month</div>
+      <div class="form-inline">
+        <select class="modal-sel" id="tm-monthday" style="margin:0;width:auto;">
+          <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+          <option value="4">4th</option><option value="5">5th</option><option value="6">6th</option>
+          <option value="7">7th</option><option value="8">8th</option><option value="9">9th</option>
+          <option value="10">10th</option><option value="11">11th</option><option value="12">12th</option>
+          <option value="13">13th</option><option value="14">14th</option><option value="15">15th</option>
+          <option value="16">16th</option><option value="17">17th</option><option value="18">18th</option>
+          <option value="19">19th</option><option value="20">20th</option><option value="21">21st</option>
+          <option value="22">22nd</option><option value="23">23rd</option><option value="24">24th</option>
+          <option value="25">25th</option><option value="26">26th</option><option value="27">27th</option>
+          <option value="28">28th</option><option value="29">29th</option><option value="30">30th</option>
+          <option value="31">31st</option>
+        </select>
+        <span style="font-size:.86rem;color:var(--ink-m);margin-left:6px;">of every month</span>
+      </div>
+    </div>
+
+    <!-- Specific weekday of month (e.g. 2nd Monday) -->
+    <div class="form-row" id="recurMonthWeekDayRow" style="display:none;">
+      <div class="form-label">Which occurrence</div>
+      <div class="form-inline" style="gap:6px;flex-wrap:wrap;">
+        <select class="modal-sel" id="tm-monthweek" style="margin:0;width:auto;">
+          <option value="1">1st</option>
+          <option value="2">2nd</option>
+          <option value="3">3rd</option>
+          <option value="4">4th</option>
+          <option value="last">Last</option>
+        </select>
+        <select class="modal-sel" id="tm-monthweekday" style="margin:0;width:auto;">
+          <option value="mon">Monday</option>
+          <option value="tue">Tuesday</option>
+          <option value="wed">Wednesday</option>
+          <option value="thu">Thursday</option>
+          <option value="fri">Friday</option>
+          <option value="sat">Saturday</option>
+          <option value="sun">Sunday</option>
+        </select>
+        <span style="font-size:.86rem;color:var(--ink-m);">of every month</span>
+      </div>
+    </div>
+
     <input type="hidden" id="tm-editId"/>
     <div class="modal-btns">
       <button class="m-btn cancel" onclick="closeOverlay('taskModal')">Cancel</button>
@@ -1237,24 +1286,84 @@ let TASK_ARCHIVE=lsGet('rs3_task_archive',[]);
 let taskFilter='today';
 
 function isTaskVisibleToday(task){
+  const todayStr=NOW.toISOString().slice(0,10);
+  const todayKey=['sun','mon','tue','wed','thu','fri','sat'][NOW.getDay()];
+  const todayDate=NOW.getDate();
+  const todayMonth=NOW.getMonth();
+  const todayYear=NOW.getFullYear();
+  // Scheduled for a specific date
+  if(task.date){return task.date===todayStr;}
+  // One-time tasks with no date — show always until done
+  if(!task.recur||task.recur==='none'){return true;}
   if(task.recur==='daily')return true;
-  if(task.recur==='none'||!task.recur)return task.day==='today'||task.day==='week';
   if(task.recur.startsWith('days:')){
-    const days=task.recur.slice(5).split(',');
-    const todayKey=['sun','mon','tue','wed','thu','fri','sat'][NOW.getDay()];
-    return days.includes(todayKey);
+    const parts=task.recur.split(':');
+    const days=parts[1].split(',');
+    const every=parseInt(parts[2]?parts[2].replace('every',''):1)||1;
+    if(!days.includes(todayKey))return false;
+    if(every===1)return true;
+    // Check if this is the right week interval using a reference Monday
+    const refDate=new Date(2024,0,1); // fixed reference Monday
+    const daysSinceRef=Math.floor((NOW-refDate)/(86400000));
+    const weeksSinceRef=Math.floor(daysSinceRef/7);
+    return weeksSinceRef%every===0;
   }
-  if(task.recur.startsWith('xperweek:')||task.recur.startsWith('xpermonth:'))return true;
+  if(task.recur.startsWith('monthday:')){
+    const d=parseInt(task.recur.split(':')[1]);
+    return todayDate===d;
+  }
+  if(task.recur.startsWith('monthweekday:')){
+    const parts=task.recur.split(':');
+    const occ=parts[1];
+    const wd={sun:0,mon:1,tue:2,wed:3,thu:4,fri:5,sat:6}[parts[2]];
+    if(NOW.getDay()!==wd)return false;
+    if(occ==='last'){
+      const nextWeek=new Date(todayYear,todayMonth,todayDate+7);
+      return nextWeek.getMonth()!==todayMonth;
+    }
+    const nth=Math.ceil(todayDate/7);
+    return nth===parseInt(occ);
+  }
   return true;
 }
 
 function isTaskVisibleTomorrow(task){
   const tomorrow=new Date(NOW);tomorrow.setDate(NOW.getDate()+1);
+  const tmrStr=tomorrow.toISOString().slice(0,10);
   const tmrKey=['sun','mon','tue','wed','thu','fri','sat'][tomorrow.getDay()];
+  const tmrDate=tomorrow.getDate();
+  const tmrMonth=tomorrow.getMonth();
+  const tmrYear=tomorrow.getFullYear();
+  if(task.date){return task.date===tmrStr;}
+  if(!task.recur||task.recur==='none'){return false;}
   if(task.recur==='daily')return true;
-  if(task.recur==='none'||!task.recur)return task.day==='tomorrow'||task.day==='week';
-  if(task.recur.startsWith('days:')){const days=task.recur.slice(5).split(',');return days.includes(tmrKey);}
-  if(task.recur.startsWith('xperweek:')||task.recur.startsWith('xpermonth:'))return true;
+  if(task.recur.startsWith('days:')){
+    const parts=task.recur.split(':');
+    const days=parts[1].split(',');
+    const every=parseInt(parts[2]?parts[2].replace('every',''):1)||1;
+    if(!days.includes(tmrKey))return false;
+    if(every===1)return true;
+    const refDate=new Date(2024,0,1);
+    const daysSinceRef=Math.floor((tomorrow-refDate)/(86400000));
+    const weeksSinceRef=Math.floor(daysSinceRef/7);
+    return weeksSinceRef%every===0;
+  }
+  if(task.recur.startsWith('monthday:')){
+    const d=parseInt(task.recur.split(':')[1]);
+    return tmrDate===d;
+  }
+  if(task.recur.startsWith('monthweekday:')){
+    const parts=task.recur.split(':');
+    const occ=parts[1];
+    const wd={sun:0,mon:1,tue:2,wed:3,thu:4,fri:5,sat:6}[parts[2]];
+    if(tomorrow.getDay()!==wd)return false;
+    if(occ==='last'){
+      const nextWeek=new Date(tmrYear,tmrMonth,tmrDate+7);
+      return nextWeek.getMonth()!==tmrMonth;
+    }
+    const nth=Math.ceil(tmrDate/7);
+    return nth===parseInt(occ);
+  }
   return false;
 }
 
@@ -1263,11 +1372,22 @@ function filterTasks(f,el){taskFilter=f;document.querySelectorAll('.tf').forEach
 function recurLabel(recur){
   if(!recur||recur==='none')return null;
   if(recur==='daily')return'↺ daily';
-  if(recur.startsWith('days:'))return'↺ '+recur.slice(5).split(',').join('/');
-  if(recur.startsWith('xperweek:'))return'↺ '+recur.split(':')[1]+'×/wk';
-  if(recur.startsWith('xpermonth:'))return'↺ '+recur.split(':')[1]+'×/mo';
+  if(recur.startsWith('days:')){
+    const parts=recur.split(':');
+    const days=parts[1].split(',').join('/');
+    const every=parts[2]?parts[2].replace('every',''):'1';
+    return'↺ '+days+(every!=='1'?' (every '+every+'w)':'');
+  }
+  if(recur.startsWith('monthday:')){const d=recur.split(':')[1];return'↺ '+ordinal(parseInt(d))+' of month';}
+  if(recur.startsWith('monthweekday:')){
+    const parts=recur.split(':');
+    const occ=parts[1]==='last'?'last':ordinal(parseInt(parts[1]));
+    const days2={mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+    return'↺ '+occ+' '+days2[parts[2]];
+  }
   return'↺ '+recur;
 }
+function ordinal(n){return n+(n===1?'st':n===2?'nd':n===3?'rd':'th');}
 
 function renderTasks(){
   const list=document.getElementById('tasksList');
@@ -1276,21 +1396,24 @@ function renderTasks(){
     if(taskFilter==='tomorrow')return isTaskVisibleTomorrow(t);
     return true;
   });
-  // Sort: undone first, done at bottom
   filtered.sort((a,b)=>{if(a.done===b.done)return 0;return a.done?1:-1;});
   if(!filtered.length){list.innerHTML='<div class="tasks-empty">No tasks here — add one below 🌿</div>';return;}
   list.innerHTML=filtered.map(t=>{
     const cat=getCatById(t.cat);
     const cs=getCatStyle(cat);
     const rl=recurLabel(t.recur);
+    const dateLabel=t.date?'<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;color:var(--ink-f);">📅 '+t.date+'</span>':'';
     return`<div class="task-row${t.done?' done':''}" onclick="toggleTask('${t.id}')">
       <div class="task-check">${t.done?'✓':''}</div>
       <div class="task-main">
-        <div class="task-text">${esc(t.text)}</div>
-        <div class="task-badges">
+        <div class="task-top-row">
+          <div class="task-text">${esc(t.text)}</div>
           <span class="t-cat" style="background:${cs.bg};color:${cs.color}">${esc(cat.name)}</span>
+        </div>
+        ${t.comment?`<div class="task-comment">${esc(t.comment)}</div>`:''}
+        <div class="task-bottom-row">
+          ${dateLabel}
           ${rl?`<span class="t-recur">${rl}</span>`:''}
-          ${t.comment?`<span class="task-comment">${esc(t.comment)}</span>`:''}
         </div>
       </div>
       <div class="task-actions">
@@ -1308,8 +1431,8 @@ function toggleTask(id){const t=TASKS.find(t=>t.id===id);if(!t)return;t.done=!t.
 function updateRecurUI(){
   const type=document.getElementById('tm-recur-type').value;
   document.getElementById('recurDaysRow').style.display=type==='days'?'':'none';
-  document.getElementById('recurXRow').style.display=(type==='xperweek'||type==='xpermonth')?'':'none';
-  document.getElementById('recurXLabel').textContent=type==='xpermonth'?'per month':'per week';
+  document.getElementById('recurMonthDayRow').style.display=type==='monthday'?'':'none';
+  document.getElementById('recurMonthWeekDayRow').style.display=type==='monthweekday'?'':'none';
 }
 function toggleDayBtn(el){el.classList.toggle('on');}
 
@@ -1320,21 +1443,45 @@ function recurFromModal(){
   const type=document.getElementById('tm-recur-type').value;
   if(type==='none')return'none';
   if(type==='daily')return'daily';
-  if(type==='days'){const days=getSelectedDays();return days.length?'days:'+days.join(','):'none';}
-  if(type==='xperweek'){const x=parseInt(document.getElementById('tm-recur-x').value)||1;return'xperweek:'+x;}
-  if(type==='xpermonth'){const x=parseInt(document.getElementById('tm-recur-x').value)||1;return'xpermonth:'+x;}
+  if(type==='days'){
+    const days=getSelectedDays();
+    const weeks=document.getElementById('tm-recur-weeks').value||'1';
+    return days.length?'days:'+days.join(',')+':every'+weeks:'none';
+  }
+  if(type==='monthday'){
+    const d=document.getElementById('tm-monthday').value||'1';
+    return'monthday:'+d;
+  }
+  if(type==='monthweekday'){
+    const w=document.getElementById('tm-monthweek').value||'1';
+    const wd=document.getElementById('tm-monthweekday').value||'mon';
+    return'monthweekday:'+w+':'+wd;
+  }
   return'none';
 }
 
 function setRecurModal(recur){
   const sel=document.getElementById('tm-recur-type');
   document.querySelectorAll('.day-check-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('tm-recur-x').value='';
+  document.getElementById('tm-recur-weeks').value='1';
   if(!recur||recur==='none'){sel.value='none';}
   else if(recur==='daily'){sel.value='daily';}
-  else if(recur.startsWith('days:')){sel.value='days';setSelectedDays(recur.slice(5).split(','));}
-  else if(recur.startsWith('xperweek:')){sel.value='xperweek';document.getElementById('tm-recur-x').value=recur.split(':')[1];}
-  else if(recur.startsWith('xpermonth:')){sel.value='xpermonth';document.getElementById('tm-recur-x').value=recur.split(':')[1];}
+  else if(recur.startsWith('days:')){
+    sel.value='days';
+    const parts=recur.split(':');
+    setSelectedDays(parts[1].split(','));
+    if(parts[2])document.getElementById('tm-recur-weeks').value=parts[2].replace('every','');
+  }
+  else if(recur.startsWith('monthday:')){
+    sel.value='monthday';
+    document.getElementById('tm-monthday').value=recur.split(':')[1]||'1';
+  }
+  else if(recur.startsWith('monthweekday:')){
+    sel.value='monthweekday';
+    const parts=recur.split(':');
+    document.getElementById('tm-monthweek').value=parts[1]||'1';
+    document.getElementById('tm-monthweekday').value=parts[2]||'mon';
+  }
   else sel.value='none';
   updateRecurUI();
 }
@@ -1344,8 +1491,8 @@ function openAddTask(){
   document.getElementById('tm-text').value='';
   buildCatSelect('tm-cat',CATEGORIES[0]?.id);
   document.getElementById('tm-comment').value='';
+  document.getElementById('tm-date').value='';
   setRecurModal('none');
-  document.getElementById('tm-day').value='today';
   document.getElementById('tm-editId').value='';
   openOverlay('taskModal');
 }
@@ -1356,8 +1503,8 @@ function openEditTask(id){
   document.getElementById('tm-text').value=t.text;
   buildCatSelect('tm-cat',t.cat);
   document.getElementById('tm-comment').value=t.comment||'';
+  document.getElementById('tm-date').value=t.date||'';
   setRecurModal(t.recur||'none');
-  document.getElementById('tm-day').value=t.day||'today';
   document.getElementById('tm-editId').value=id;
   openOverlay('taskModal');
 }
@@ -1367,10 +1514,10 @@ function saveTask(){
   const cat=document.getElementById('tm-cat').value;
   const comment=document.getElementById('tm-comment').value.trim();
   const recur=recurFromModal();
-  const day=document.getElementById('tm-day').value;
+  const date=document.getElementById('tm-date').value||'';
   const editId=document.getElementById('tm-editId').value;
-  if(editId){const t=TASKS.find(t=>t.id===editId);if(t)Object.assign(t,{text,cat,comment,recur,day});}
-  else TASKS.push({id:uid(),text,cat,day,done:false,comment,recur,created:Date.now()});
+  if(editId){const t=TASKS.find(t=>t.id===editId);if(t)Object.assign(t,{text,cat,comment,recur,date});}
+  else TASKS.push({id:uid(),text,cat,date,done:false,comment,recur,created:Date.now()});
   closeOverlay('taskModal');renderTasks();syncToSheets('tasks');
 }
 
@@ -1758,8 +1905,40 @@ function renderKPIRecords(){renderKPIRecThisMonth();renderKPIRecAll();}
 function renderKPIRecThisMonth(){const mk=monthKey(NOW);const weeks=KPI_RECORDS.filter(r=>r.monthKey===mk).slice().sort((a,b)=>a.weekKey.localeCompare(b.weekKey));const el=document.getElementById('kpiRecThisMonth');if(!weeks.length){el.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.85rem;text-align:center;padding:20px;">No records for this month yet. Click "💾 Save Week" above.</div>';return;}el.innerHTML=weeks.map(r=>recWeekRowHTML(r)).join('');}
 function renderKPIRecAll(){const el=document.getElementById('kpiRecAll');if(!KPI_RECORDS.length){el.innerHTML='<div style="color:var(--ink-f);font-style:italic;font-size:.85rem;text-align:center;padding:20px;">No records yet.</div>';return;}const byMonth={};KPI_RECORDS.forEach(r=>{if(!byMonth[r.monthKey])byMonth[r.monthKey]={label:r.monthLabel,weeks:[]};byMonth[r.monthKey].weeks.push(r);});el.innerHTML=Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([mk,mg])=>`<div class="rec-month-group"><div class="rec-month-label"><span>${mg.label}</span><span style="font-size:.7rem;color:var(--ink-f);font-style:normal;font-family:'DM Mono',monospace;">${mg.weeks.length} week${mg.weeks.length!==1?'s':''}</span></div>${mg.weeks.sort((a,b)=>a.weekKey.localeCompare(b.weekKey)).map(r=>recWeekRowHTML(r)).join('')}</div>`).join('');}
 function recWeekRowHTML(r){const tot=r.categories.reduce((s,c)=>s+c.items.length,0),isActive=r.weekKey===weekKey(NOW);return`<div class="rec-week-row" onclick="openWeekDetail('${r.weekKey}')"><div class="rec-week-dot" style="background:${isActive?'#8fa87a':'#b08060'}"></div><div class="rec-week-name">${r.weekLabel}</div><div style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--ink-m);">${tot} total</div><span class="rec-week-badge ${isActive?'rw-active':'rw-past'}">${isActive?'Active':'Saved'}</span></div>`;}
-function openWeekDetail(wk){const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;document.getElementById('wdbTitle').textContent='Week of '+rec.weekLabel;if(wdbChart){wdbChart.destroy();wdbChart=null;}const cats=rec.categories.filter(c=>c.items.length>0);const ctx=document.getElementById('wdbPieCanvas').getContext('2d');const CHART_COLORS=['#00acc1','#fb8c00','#ef5350','#ab47bc','#43a047','#42a5f5','#ff7043','#aed581','#7e57c2','#90a4ae','#5c6bc0'];wdbChart=new Chart(ctx,{type:'doughnut',data:{labels:cats.map(c=>c.name),datasets:[{data:cats.map(c=>c.items.length),backgroundColor:cats.map((c,i)=>CHART_COLORS[c.ci%CHART_COLORS.length]),borderWidth:2,borderColor:'#faf7f1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}}});const allItems=[];rec.categories.forEach(cat=>cat.items.forEach(item=>allItems.push({item,cat})));const cands=document.getElementById('wdbCandidates');cands.innerHTML=allItems.length?allItems.map(({item,cat})=>`<div class="wdb-cand-row"><div class="wdb-cand-name">${item.name||'(unnamed candidate)'}</div><span style="font-size:.7rem;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:10px;background:${KPI_PAL[cat.ci%KPI_PAL.length].bg};color:${KPI_PAL[cat.ci%KPI_PAL.length].tx};">${cat.name}</span><select class="wdb-cand-sel" onchange="updateRecordStatus('${wk}','${cat.id}','${item.id}',this.value)">${rec.categories.map(c=>`<option value="${c.id}"${c.id===cat.id?' selected':''}>${c.name}</option>`).join('')}</select></div>`).join(''):'<div style="color:var(--ink-f);font-style:italic;font-size:.85rem;">No named candidates in this record.</div>';document.getElementById('weekDetailOverlay').classList.add('open');}
+function openWeekDetail(wk){const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;document.getElementById('wdbTitle').textContent='Week of '+rec.weekLabel;if(wdbChart){wdbChart.destroy();wdbChart=null;}const cats=rec.categories.filter(c=>c.items.length>0);const ctx=document.getElementById('wdbPieCanvas').getContext('2d');const CHART_COLORS=['#00acc1','#fb8c00','#ef5350','#ab47bc','#43a047','#42a5f5','#ff7043','#aed581','#7e57c2','#90a4ae','#5c6bc0'];wdbChart=new Chart(ctx,{type:'doughnut',data:{labels:cats.map(c=>c.name),datasets:[{data:cats.map(c=>c.items.length),backgroundColor:cats.map((c,i)=>CHART_COLORS[c.ci%CHART_COLORS.length]),borderWidth:2,borderColor:'#faf7f1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}}});const allItems=[];rec.categories.forEach(cat=>cat.items.forEach(item=>allItems.push({item,cat})));const cands=document.getElementById('wdbCandidates');const candRows=allItems.map(({item,cat})=>{
+  const del='<button onclick="delRecordItem(\''+wk+'\',\''+cat.id+'\',\''+item.id+'\')" style="width:20px;height:20px;border-radius:5px;border:1px solid var(--border);background:none;cursor:pointer;font-size:.6rem;color:var(--ink-m);flex-shrink:0;" title="Remove">✕</button>';
+  const nameInp='<input value="'+esc(item.name||'')+'" placeholder="Name..." onchange="renameRecordItem(\''+wk+'\',\''+cat.id+'\',\''+item.id+'\',this.value)" style="flex:1;font-family:\'Crimson Pro\',serif;font-size:.88rem;background:transparent;border:none;border-bottom:1px dashed var(--border);outline:none;min-width:80px;color:var(--ink);"/>';
+  const catSel='<select class="wdb-cand-sel" onchange="updateRecordStatus(\''+wk+'\',\''+cat.id+'\',\''+item.id+'\',this.value)">'+rec.categories.map(c=>'<option value="'+c.id+'"'+(c.id===cat.id?' selected':'')+'>'+c.name+'</option>').join('')+'</select>';
+  const badge='<span style="font-size:.7rem;font-family:\'DM Mono\',monospace;padding:2px 8px;border-radius:10px;background:'+KPI_PAL[cat.ci%KPI_PAL.length].bg+';color:'+KPI_PAL[cat.ci%KPI_PAL.length].tx+';flex-shrink:0;">'+cat.name+'</span>';
+  return'<div class="wdb-cand-row">'+nameInp+badge+catSel+del+'</div>';
+}).join('');
+const addRow='<div style="display:flex;gap:8px;margin-top:10px;align-items:center;"><input id="wdbNewName" class="modal-inp" style="margin:0;flex:1;" placeholder="New person name..."/><select id="wdbNewCat" class="wdb-cand-sel">'+rec.categories.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('')+'</select><button class="sm-btn" onclick="addRecordItem(\''+wk+'\')">+ Add</button></div>';
+cands.innerHTML=(allItems.length?candRows:'<div style="color:var(--ink-f);font-style:italic;font-size:.85rem;margin-bottom:8px;">No people yet — add one below.</div>')+addRow;document.getElementById('weekDetailOverlay').classList.add('open');}
 function closeWeekDetail(){document.getElementById('weekDetailOverlay').classList.remove('open');if(wdbChart){wdbChart.destroy();wdbChart=null;}}
+function addRecordItem(wk){
+  const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;
+  const name=document.getElementById('wdbNewName').value.trim();
+  const catId=document.getElementById('wdbNewCat').value;
+  const cat=rec.categories.find(c=>c.id===catId);
+  if(!cat)return;
+  cat.items.push({id:uid(),name:name||'New Person'});
+  lsSet('rs3_kpi_records',KPI_RECORDS);
+  document.getElementById('wdbNewName').value='';
+  openWeekDetail(wk);
+}
+function delRecordItem(wk,catId,itemId){
+  const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;
+  const cat=rec.categories.find(c=>c.id===catId);if(!cat)return;
+  cat.items=cat.items.filter(i=>i.id!==itemId);
+  lsSet('rs3_kpi_records',KPI_RECORDS);
+  openWeekDetail(wk);
+}
+function renameRecordItem(wk,catId,itemId,newName){
+  const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;
+  const cat=rec.categories.find(c=>c.id===catId);if(!cat)return;
+  const item=cat.items.find(i=>i.id===itemId);if(item)item.name=newName;
+  lsSet('rs3_kpi_records',KPI_RECORDS);
+}
 function updateRecordStatus(wk,oldCatId,itemId,newCatId){const rec=KPI_RECORDS.find(r=>r.weekKey===wk);if(!rec)return;const oldCat=rec.categories.find(c=>c.id===oldCatId),newCat=rec.categories.find(c=>c.id===newCatId);if(!oldCat||!newCat||oldCatId===newCatId)return;const idx=oldCat.items.findIndex(i=>i.id===itemId);if(idx===-1)return;newCat.items.push(...oldCat.items.splice(idx,1));lsSet('rs3_kpi_records',KPI_RECORDS);openWeekDetail(wk);}
 renderKPIRecords();
 /* ════ PAY RUBRIC (TABS) ════ */
